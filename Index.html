@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Assistant</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+        .container {
+            text-align: center;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #response {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Voice Assistant</h1>
+        <button id="listenButton">Speak</button>
+        <div id="response"></div>
+    </div>
+
+    <script>
+        const listenButton = document.getElementById("listenButton");
+        const responseDiv = document.getElementById("response");
+
+        // Check if the browser supports speech recognition
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            alert("Your browser does not support speech recognition.");
+        } else {
+            const recognition = new SpeechRecognition();
+            recognition.lang = "en-US";
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                responseDiv.textContent = `You said: ${transcript}`;
+                fetch("/query", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ query: transcript })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    responseDiv.textContent = `Assistant: ${data.answer || data.error}`;
+                })
+                .catch(error => {
+                    responseDiv.textContent = "Error fetching response from the assistant.";
+                });
+            };
+
+            recognition.onerror = (event) => {
+                responseDiv.textContent = "Error recognizing speech.";
+            };
+
+            listenButton.addEventListener("click", () => {
+                recognition.start();
+                responseDiv.textContent = "Listening...";
+            });
+        }
+    </script>
+</body>
+</html>
